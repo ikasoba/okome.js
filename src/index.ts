@@ -95,8 +95,8 @@ export function createElement<N extends string | Component>(
     }
   } finally {
     const space = hooksManager?.pop();
-    if (!space) return;
-    requestAnimationFrame(() => hooksManager?.dispatch(space));
+    if (space)
+      requestAnimationFrame(() => hooksManager?.dispatch(space));
   }
 }
 
