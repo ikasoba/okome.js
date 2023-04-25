@@ -61,14 +61,14 @@ export function toDOMNode<T extends ChildNodeType>(x: T) {
 
 export function createElement<N extends string | Component>(
   name: N,
-  attrs: GetAttrs<N>,
+  attrs?: GetAttrs<N>,
   ...children: ChildNodeType[]
 ) {
   hooksManager?.begin();
   try {
     if (typeof name == "string") {
       const elm = document.createElement(name);
-      for (let [k, v] of Object.entries(attrs)) {
+      for (let [k, v] of Object.entries(attrs ?? {})) {
         if (k.startsWith("on:")) {
           k = k.slice(3);
           if (!(v instanceof Signal || v instanceof Function)) continue;
@@ -91,7 +91,7 @@ export function createElement<N extends string | Component>(
       elm.append(...children.map(toDOMNode));
       return elm;
     } else {
-      return toDOMNode(name({ ...attrs, children }));
+      return toDOMNode(name({ ...(attrs ?? {}), children }));
     }
   } finally {
     const space = hooksManager?.pop();
