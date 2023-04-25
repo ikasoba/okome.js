@@ -13,7 +13,8 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "node --loader ts-node/esm build.ts && tsc --build"
+    "build": "node --loader ts-node/esm build.ts",
+    "install": "npm run build"
   },
   "keywords": [],
   "author": "github.com/ikasoba",
