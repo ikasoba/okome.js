@@ -5,12 +5,11 @@
   "description": "minimum frontend framework.",
   "main": "src/index.js",
   "exports": {
-    ".": {
-      "default": "./src/index.js"
-    },
-    "./hooks": {
-      "default": "./src/hooks"
-    }
+    ".": "./src/index.js",
+    "./hooks/*": "./src/hooks/*.js",
+    "./signal": "./src/signal.js",
+    "./jsx-runtime": "./src/index.js",
+    "./HooksManager": "./src/HooksManager.js"
   },
   "scripts": {
     "test": "vitest",

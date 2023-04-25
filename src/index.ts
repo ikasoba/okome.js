@@ -99,3 +99,7 @@ export function createElement<N extends string | Component>(
     requestAnimationFrame(() => hooksManager?.dispatch(space));
   }
 }
+
+export default {
+  createElement,
+}
