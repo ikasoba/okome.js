@@ -42,7 +42,6 @@ export type GetAttrs<N extends string | Component> = N extends string
 export type ChildNodeType = StringableValue | Node | Signal<any>;
 
 export function toDOMNode<T extends ChildNodeType>(x: T) {
-  console.log(x);
   if (x instanceof Signal) {
     let node =
       x.value instanceof Node ? x.value : document.createTextNode(`${x.value}`);
