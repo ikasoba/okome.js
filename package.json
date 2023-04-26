@@ -19,6 +19,7 @@
   },
   "keywords": [],
   "author": "github.com/ikasoba",
+  "repository": "https://github.com/ikasoba/okome.js",
   "license": "MIT",
   "devDependencies": {
     "esbuild": "^0.17.18",
