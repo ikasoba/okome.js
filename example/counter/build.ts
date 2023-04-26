@@ -11,7 +11,6 @@ import { build, context } from "esbuild";
       bundle: true,
       minify: true,
       sourcemap: "inline",
-      inject: ["./jsx-header.ts"],
     })
   ).watch();
 })();
