@@ -16,7 +16,6 @@ const flag = process.argv.slice(2).at(-1);
     }),
   ];
   if (flag == "build" || !flag) {
-    console.log(flag);
     await Promise.all(contexts.map((x) => x.rebuild()));
   } else {
     await Promise.all(contexts.map((x) => x.watch()));
