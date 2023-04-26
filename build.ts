@@ -1,21 +1,24 @@
-import { build } from "esbuild";
+import { build, context } from "esbuild";
 import { globby as glob } from "globby";
 
-(async() => {
+(async () => {
+  (
+    await context({
+      entryPoints: await glob("{src/*.ts,src/**/*.ts}"),
+      format: "esm",
+      minify: true,
+      sourcemap: "linked",
+      outdir: "./src",
+    })
+  ).watch();
 
-build({
-  entryPoints: await glob("{src/*.ts,src/**/*.ts}"),
-  format: "esm",
-  minify: true,
-  outdir: "./src",
-});
-
-build({
-  entryPoints: ["src/okome.ts"],
-  format: "esm",
-  minify: true,
-  bundle: true,
-  outfile: "./src/okome.min.js",
-});
-
-})()
+  (
+    await context({
+      entryPoints: ["src/okome.ts"],
+      format: "esm",
+      bundle: true,
+      minify: true,
+      outfile: "./src/okome.min.js",
+    })
+  ).watch();
+})();

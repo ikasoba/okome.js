@@ -21,7 +21,7 @@ export type StringableValue =
   | null
   | undefined;
 
-export type Component = (attrs: {}) => StringableValue | Node;
+export type Component<A extends {} = {}> = (attrs: A) => ChildNodeType;
 
 type RemoveStart<
   R extends string,
@@ -36,69 +36,106 @@ export type GetAttrs<N extends string | Component> = N extends string
       [K in `on:${keyof HTMLElementEventMap}`]:
         | ((event: HTMLElementEventMap[RemoveStart<"on:", K>]) => void)
         | Signal<any>;
-    }
-  : ArgType<Exclude<N, string>> & { children: ChildNodeType[] };
+    } & { children?: ChildrenNode }
+  : ArgType<Exclude<N, string>>[0];
 
 export type ChildNodeType = StringableValue | Node | Signal<any>;
+export type ChildrenNode = ChildNodeType[] | ChildNodeType;
 
-export function toDOMNode<T extends ChildNodeType>(x: T) {
+export function toDOMNode<T extends ChildNodeType>(x: T): Node {
   if (x instanceof Signal) {
-    let node =
-      x.value instanceof Node ? x.value : document.createTextNode(`${x.value}`);
-    x.onUpdate((value) => {
-      value = value instanceof Node ? value : toDOMNode(value);
-      node.parentNode?.replaceChild(value, node);
-      node = value;
+    let prevValue = toDOMNode(x.value);
+    let fragmentChildren =
+      prevValue instanceof DocumentFragment ? [...prevValue.childNodes] : [];
+    // 今のノードがフラグメントなら子をfragmentChildrenに集めることでごっそり書き換えられるようにしている
+    x.onUpdate((_value) => {
+      const value = toDOMNode(_value);
+      if (prevValue instanceof DocumentFragment) {
+        if (fragmentChildren.length) {
+          fragmentChildren[0].parentNode?.replaceChild(
+            value,
+            fragmentChildren[0]
+          );
+          fragmentChildren
+            .slice(1)
+            .forEach((x) => x.parentNode?.removeChild(x));
+        }
+        fragmentChildren = [];
+      } else if (value instanceof DocumentFragment) {
+        fragmentChildren = [...value.childNodes];
+        prevValue.parentNode?.replaceChild(value, prevValue);
+      } else {
+        prevValue.parentNode?.replaceChild(value, prevValue);
+      }
+      prevValue = value;
     });
-    return node;
-  } else if (x instanceof Node) {
-    return x;
-  } else {
-    return document.createTextNode(`${x}`);
+    return prevValue;
+  } else if (x == null) {
+    return document.createComment("");
   }
+  return x instanceof Node ? x : document.createTextNode(`${x}`);
 }
 
-export function createElement<N extends string | Component>(
+export function createElement<N extends string | Component<any>>(
   name: N,
-  attrs?: GetAttrs<N>,
-  ...children: ChildNodeType[]
+  _attrs?: GetAttrs<N>
 ) {
   hooksManager?.begin();
   try {
-    if (typeof name == "string") {
-      const elm = document.createElement(name);
-      for (let [k, v] of Object.entries(attrs ?? {})) {
-        if (k.startsWith("on:")) {
-          k = k.slice(3);
-          if (!(v instanceof Signal || v instanceof Function)) continue;
-          if (v instanceof Signal) {
-            v.onUpdate((value) => elm.setAttribute(k, `${value}`));
-            elm.addEventListener(k, v.value);
-            continue;
-          }
-          //@ts-ignore
-          elm.addEventListener(k, v);
-          continue;
+    if (typeof name != "string") return toDOMNode(name(_attrs));
+    const attrs: { children?: Node[] | Node } = {
+      ..._attrs,
+      ...{
+        children: _attrs?.children
+          ? _attrs.children instanceof Array
+            ? _attrs.children.map(toDOMNode)
+            : toDOMNode(_attrs?.children)
+          : undefined,
+      },
+    };
+    const elm = document.createElement(name);
+    for (let k in attrs) {
+      const v = attrs[k as keyof typeof attrs];
+      if (k == "children") {
+        if (v instanceof Array) {
+          elm.append(...v);
+        } else if (v) {
+          elm.append(v);
         }
+      } else if (k.startsWith("on:")) {
+        k = k.slice(3);
         if (v instanceof Signal) {
-          v.onUpdate((value: any) => elm.setAttribute(k, `${value}`));
-          elm.setAttribute(k, `${v.value}`);
-          continue;
+          v.onUpdate((value) => elm.addEventListener(k, value));
+          elm.addEventListener(k, v.value);
         }
-        elm.setAttribute(k, `${v}`);
-      }
-      elm.append(...children.map(toDOMNode));
-      return elm;
-    } else {
-      return toDOMNode(name({ ...(attrs ?? {}), children }));
+        //@ts-ignore
+        if (v instanceof Function) elm.addEventListener(k, v);
+      } else if (v instanceof Signal) {
+        v.onUpdate((value: any) => elm.setAttribute(k, `${value}`));
+        elm.setAttribute(k, `${v.value}`);
+      } else elm.setAttribute(k, `${v}`);
     }
+    return elm;
   } finally {
     const space = hooksManager?.pop();
-    if (space)
-      requestAnimationFrame(() => hooksManager?.dispatch(space));
+    if (space) setTimeout(() => hooksManager?.dispatch(space), 0);
   }
 }
 
+export const Fragment: Component<{ children: ChildrenNode }> = ({
+  children,
+}) => {
+  const fragment = document.createDocumentFragment();
+  fragment.append(
+    ...(children instanceof Array ? children : [children]).map(toDOMNode)
+  );
+  return fragment;
+};
+
+export const jsx = createElement;
+export const jsxs = createElement;
+
 export default {
-  createElement,
-}
+  jsx,
+  jsxs,
+};

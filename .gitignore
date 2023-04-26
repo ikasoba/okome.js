@@ -1,3 +1,4 @@
 *.js
+*.map
 dest/
 node_modules/

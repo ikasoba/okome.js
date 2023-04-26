@@ -1,13 +1,8 @@
-export interface Context<V> {
-  get(key: string): V
-  set(key: string, value: V): void
-}
+let contexts: { [key: string]: Map<any, any> } = {};
 
-let contexts: {[key: string]: Context<any>} = {}
-
-export function useContext(key: string = "global"){
-  if (!contexts[key]){
-    contexts[key] = new Map<string, any>()
+export function useContext<C extends Map<any, any>>(key: string = "global"): C {
+  if (!contexts[key]) {
+    contexts[key] = new Map<string, any>();
   }
-  return contexts[key]
+  return contexts[key] as C;
 }

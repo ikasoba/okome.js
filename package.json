@@ -1,20 +1,21 @@
 {
   "type": "module",
   "name": "@ikasoba000/okome.js",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "minimum frontend framework.",
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./hooks/*": "./src/hooks/*.js",
+    "./components/*": "./src/components/*.js",
     "./signal": "./src/signal.js",
-    "./jsx-runtime": "./src/index.js",
+    "./jsx-runtime": "./src/jsx-runtime.js",
     "./HooksManager": "./src/HooksManager.js"
   },
   "scripts": {
     "test": "vitest",
     "build": "node --loader ts-node/esm build.ts",
-    "install": "npm run build"
+    "preinstall": "npm run build"
   },
   "keywords": [],
   "author": "github.com/ikasoba",
